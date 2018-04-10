@@ -9,6 +9,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+
+	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
 const (
@@ -225,7 +227,16 @@ func (c *ClusterHealth) fetchAndDecodeClusterHealth() (clusterHealthResponse, er
 
 	u := *c.url
 	u.Path = "/_cluster/health"
-	res, err := c.client.Get(u.String())
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return chr, fmt.Errorf("failed to create HTTP request: %s", err)
+	}
+	if SignElasticsearchRequest {
+		awsauth.Sign(req)
+	}
+
+	res, err := c.client.Do(req)
 	if err != nil {
 		return chr, fmt.Errorf("failed to get cluster health from %s://%s:%s%s: %s",
 			u.Scheme, u.Hostname(), u.Port(), u.Path, err)

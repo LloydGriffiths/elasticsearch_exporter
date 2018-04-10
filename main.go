@@ -28,6 +28,7 @@ func main() {
 		esCA                 = flag.String("es.ca", "", "Path to PEM file that contains trusted CAs for the Elasticsearch connection.")
 		esClientPrivateKey   = flag.String("es.client-private-key", "", "Path to PEM file that conains the private key for client auth when connecting to Elasticsearch.")
 		esClientCert         = flag.String("es.client-cert", "", "Path to PEM file that conains the corresponding cert for the private key to connect to Elasticsearch.")
+		esRequestSigning     = flag.Bool("es.sign-request", false, "Sign HTTP requests to authenticate against an AWS Elasticsearch domain.")
 		esInsecureSkipVerify = flag.Bool("es.ssl-skip-verify", false, "Skip SSL verification when connecting to Elasticsearch.")
 		showVersion          = flag.Bool("version", false, "Show version and exit")
 	)
@@ -43,6 +44,8 @@ func main() {
 		"ts", log.DefaultTimestampUTC,
 		"caller", log.DefaultCaller,
 	)
+
+	collector.SignElasticsearchRequest = *esRequestSigning
 
 	esURL, err := url.Parse(*esURI)
 	if err != nil {

@@ -9,6 +9,8 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+
+	awsauth "github.com/smartystreets/go-aws-auth"
 )
 
 var (
@@ -376,7 +378,15 @@ func (c *Indices) fetchAndDecodeIndexStats() (indexStatsResponse, error) {
 	u := *c.url
 	u.Path = "/_all/_stats"
 
-	res, err := c.client.Get(u.String())
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		return isr, fmt.Errorf("failed to create HTTP request: %s", err)
+	}
+	if SignElasticsearchRequest {
+		awsauth.Sign(req)
+	}
+
+	res, err := c.client.Do(req)
 	if err != nil {
 		return isr, fmt.Errorf("failed to get index stats from %s://%s:%s%s: %s",
 			u.Scheme, u.Hostname(), u.Port(), u.Path, err)
